@@ -7,21 +7,25 @@ def extract_list(name, content):
     match = re.search(
         r"""^\s+{} [^\[]+\[([^\]]*)\]""".format(name),
         content,
-        flags=re.VERBOSE | re.MULTILINE
+        flags=re.VERBOSE | re.MULTILINE,
     )
     if not match:
         return []
 
     raw_list = match.group(1).strip()
+    raw_list = raw_list.replace("\n", "").split("),")
+
     if not raw_list:
         return []
 
-    match_iter = re.finditer(
-        r"""\('([^']+)',\s*'([^_][^']+)'\)""",
-        raw_list,
-        flags=re.VERBOSE
-    )
-    return [(match.group(1), match.group(2)) for match in match_iter]
+    ret = []
+    for dep in raw_list:
+        match = re.search(
+            r"""\(['"]([\w]+)['"],\s*['"](\d{4}_[\w]+)['"]\)?""", dep, flags=re.VERBOSE
+        )
+        if match:
+            ret.append((match.group(1), match.group(2)))
+    return ret
 
 
 def extract_dependencies(file_path):
